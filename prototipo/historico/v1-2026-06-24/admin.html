@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Administrativo — Trilhar Contabilidade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="app-shell">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark"><img src="img/logo-glyph.png" alt="Trilhar Contabilidade"></div>
+      <div>
+        <div class="brand-name">TRILHAR CONTABILIDADE</div>
+        <div class="brand-sub">PAINEL ADMINISTRATIVO</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <div class="dropdown-wrap">
+        <div class="user-chip" style="cursor:pointer" onclick="toggleDropdown('user-panel')">
+          <div class="avatar">TI</div>
+          <span>Tinaysa</span>
+        </div>
+        <div class="dropdown-panel" id="user-panel">
+          <div class="dropdown-header">Conta</div>
+          <div class="dropdown-item" data-theme-toggle></div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item" onclick="window.location.href='admin-login.html'"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="page-header page-header-flex">
+      <div>
+        <p class="eyebrow" id="today-eyebrow">Administração</p>
+        <h1 class="page-title">Visão geral</h1>
+        <p class="page-subtitle">Acompanhe a operação do escritório antes de entrar nos detalhes de cada cliente.</p>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-secondary" onclick="openCliente()" id="btn-novo-cliente"></button>
+        <button class="btn btn-primary" onclick="openUpload()" id="btn-upload"></button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-top"><p class="stat-label">Clientes ativos</p><div class="stat-icon" id="kpi-icon-clients"></div></div>
+        <p class="stat-value">6</p>
+        <p class="stat-trend">Nenhum novo este mês</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top"><p class="stat-label">Documentos enviados (mês)</p><div class="stat-icon" id="kpi-icon-docs"></div></div>
+        <p class="stat-value">18</p>
+        <p class="stat-trend">+5 em relação a maio</p>
+      </div>
+      <div class="stat-card attention clickable" id="kpi-card-warning" title="Ver detalhes em Precisa de atenção">
+        <div class="stat-top"><p class="stat-label">Boletos vencendo em 7 dias</p><div class="stat-icon warn" id="kpi-icon-warning"></div></div>
+        <p class="stat-value">1</p>
+        <p class="stat-trend" style="color:var(--semantic-warning)">Mais próximo: 4 dias</p>
+      </div>
+      <div class="stat-card attention clickable" id="kpi-card-pending" title="Ver detalhes em Precisa de atenção">
+        <div class="stat-top"><p class="stat-label">Clientes com pendências</p><div class="stat-icon warn" id="kpi-icon-pending"></div></div>
+        <p class="stat-value">2</p>
+        <p class="stat-trend" style="color:var(--semantic-warning)" id="kpi-pending-trend">— categorias pendentes</p>
+      </div>
+    </div>
+
+    <div class="dashboard-layout">
+      <div class="dashboard-main">
+        <div class="tabs">
+          <div class="tab active" data-tab="clientes" onclick="switchTab('clientes')">Clientes</div>
+          <div class="tab" data-tab="documentos" onclick="switchTab('documentos')">Documentos enviados</div>
+          <div class="tab" data-tab="admins" onclick="switchTab('admins')">Administradores</div>
+        </div>
+
+        <!-- Aba: Clientes -->
+        <div id="tab-clientes">
+          <div style="position:relative; max-width:360px; margin-bottom:16px;">
+            <span id="search-icon" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-secondary); display:flex;"></span>
+            <input id="client-search" type="text" placeholder="Buscar por nome, e-mail ou CPF/CNPJ" style="width:100%; padding:11px 14px 11px 38px; border-radius:8px; border:1px solid var(--border-default); background:var(--bg-surface-elevated); color:var(--text-primary); font-size:14px; font-family:inherit;">
+          </div>
+          <div class="table-card">
+            <table class="table-clients">
+              <thead>
+                <tr><th>Cliente</th><th>E-mail</th><th>Status</th><th>Último documento enviado</th><th>Pendências</th><th></th></tr>
+              </thead>
+              <tbody id="clients-tbody"></tbody>
+            </table>
+            <p class="hint" id="no-results" style="display:none; padding:20px; margin:0; text-align:center;">Nenhum cliente encontrado.</p>
+          </div>
+        </div>
+
+        <!-- Aba: Documentos enviados -->
+        <div class="table-card" id="tab-documentos" style="display:none;">
+          <table>
+            <thead>
+              <tr><th>Data</th><th>Cliente</th><th>Documento</th><th>Categoria</th><th>E-mail disparado</th><th></th></tr>
+            </thead>
+            <tbody id="docs-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Aba: Administradores -->
+        <div id="tab-admins" style="display:none;">
+          <div class="table-toolbar page-header-flex" style="padding:0; margin-bottom:16px; border-bottom:none;">
+            <p class="page-subtitle" style="margin:0;">Pessoas com acesso ao painel administrativo da Trilhar Contabilidade.</p>
+            <button class="btn btn-secondary" id="btn-novo-admin"></button>
+          </div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr><th>Nome</th><th>E-mail</th><th>Nível de acesso</th><th>Adicionado em</th><th></th></tr>
+              </thead>
+              <tbody id="admins-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra lateral -->
+      <div class="dashboard-sidebar">
+        <div class="side-card">
+          <div class="side-card-head">
+            <h3>Próximos vencimentos</h3>
+          </div>
+          <div id="upcoming-list" class="activity-feed"></div>
+
+          <div class="calendar-mini">
+            <div class="calendar-mini-head">
+              <button class="icon-btn icon-btn-sm" id="cal-prev"></button>
+              <span id="cal-month-label">—</span>
+              <button class="icon-btn icon-btn-sm" id="cal-next"></button>
+            </div>
+            <div class="calendar-weekdays">
+              <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
+            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+          </div>
+        </div>
+
+        <div class="side-card">
+          <div class="side-card-head">
+            <h3>Precisa de atenção</h3>
+          </div>
+          <div id="attention-list" class="attention-list"></div>
+        </div>
+
+        <div class="side-card">
+          <div class="side-card-head">
+            <h3>Atividade recente</h3>
+          </div>
+          <div id="activity-feed" class="activity-feed"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Painel lateral: novo cliente -->
+<div class="panel-overlay" id="panel-cliente" onclick="if(event.target===this) closeCliente()">
+  <div class="side-panel">
+    <div class="side-panel-header">
+      <div>
+        <h3 class="panel-title">Cadastrar cliente</h3>
+        <p class="panel-subtitle">Crie o acesso do cliente ao portal em poucos passos.</p>
+      </div>
+      <button class="panel-close" onclick="closeCliente()" id="cliente-close-btn"></button>
+    </div>
+
+    <div class="side-panel-body">
+      <div class="avatar-field" id="avatar-upload-trigger">
+        <div class="avatar-thumb">
+          <div class="avatar-ring"><div class="avatar-ring-inner" id="novo-cliente-preview"></div></div>
+          <div class="avatar-upload-badge" id="avatar-upload-badge"></div>
+        </div>
+        <div class="avatar-field-info">
+          <p>Foto ou logo <span class="tag-optional">opcional</span></p>
+          <span>Ajuda a identificar o cliente na lista. PNG ou JPG.</span>
+        </div>
+      </div>
+      <input type="file" accept="image/*" id="novo-cliente-foto" style="display:none;">
+
+      <div class="form-section">
+        <p class="form-section-title">Identificação</p>
+        <div class="field"><label>Nome completo ou razão social</label><input placeholder="Ex: João Silva" id="novo-cliente-nome"></div>
+        <div class="field"><label>CPF ou CNPJ</label><input placeholder="000.000.000-00"></div>
+      </div>
+
+      <div class="form-section">
+        <p class="form-section-title">Acesso ao portal</p>
+        <div class="field"><label>E-mail</label><input placeholder="cliente@exemplo.com"></div>
+        <div class="field"><label>Telefone</label><input placeholder="(11) 90000-0000"></div>
+
+        <div class="alert-box alert-info">
+          <div class="alert-icon" id="cliente-note-icon"></div>
+          <div>
+            <p class="alert-title">O cliente recebe o acesso por e-mail</p>
+            <p class="alert-subtitle">Inclui um link para definir a própria senha no primeiro login.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-panel-footer">
+      <button class="btn btn-secondary" onclick="closeCliente()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-confirmar-cliente">Cadastrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Painel lateral: upload de documento -->
+<div class="panel-overlay" id="panel-upload" onclick="if(event.target===this) closeUpload()">
+  <div class="side-panel">
+    <div class="side-panel-header">
+      <div class="modal-icon-header">
+        <div class="modal-icon-badge" id="upload-header-icon"></div>
+        <div>
+          <h3 style="margin:0; font-size:16px;">Upload de documento</h3>
+          <p class="hint" style="margin:0;">Selecione o cliente e a categoria do documento.</p>
+        </div>
+      </div>
+      <button class="panel-close" onclick="closeUpload()" id="upload-close-btn"></button>
+    </div>
+
+    <div class="side-panel-body">
+      <div class="field">
+        <label>Cliente</label>
+        <select class="select-like"><option>João Silva</option><option>Maria Souza</option><option>Empresa Alfa Ltda</option><option>Carlos Pereira</option></select>
+      </div>
+      <div class="field">
+        <label>Categoria</label>
+        <select class="select-like" id="cat-select" onchange="toggleDueDate()">
+          <option value="boleto">Boleto</option>
+          <option value="cartao">Cartão CNPJ</option>
+          <option value="empresa">Documentos da Empresa</option>
+          <option value="contrato">Contrato</option>
+          <option value="declaracoes">Declarações</option>
+        </select>
+      </div>
+      <div class="field" id="subcat-field" style="display:none;">
+        <label>Subcategoria</label>
+        <select class="select-like" id="subcat-select">
+          <option>Contrato Social</option>
+          <option>Alterações Contratuais</option>
+          <option>Alvará de Funcionamento</option>
+          <option>Inscrição Estadual</option>
+          <option>Inscrição Municipal</option>
+          <option>CCMEI</option>
+          <option>Procuração</option>
+          <option>Certificado Digital</option>
+          <option>Licença Sanitária</option>
+          <option>Licença Ambiental</option>
+          <option>Balanço Patrimonial</option>
+          <option>Outros</option>
+        </select>
+      </div>
+      <div class="field" id="due-field">
+        <label>Data de vencimento</label>
+        <input type="date">
+      </div>
+      <div class="field">
+        <label>Arquivo(s) PDF</label>
+        <div class="dropzone" id="dropzone">
+          <input type="file" accept=".pdf" id="upload-file-input" multiple>
+          <div class="dropzone-icon" id="dropzone-icon"></div>
+          <p class="dropzone-title">Arraste arquivos aqui ou <span>clique para selecionar</span></p>
+          <p class="dropzone-hint">PDF · cada arquivo é salvo como um documento separado</p>
+        </div>
+        <div id="upload-file-list" class="upload-file-list"></div>
+      </div>
+
+      <div class="alert-box alert-info" id="email-note">
+        <div class="alert-icon" id="email-note-icon"></div>
+        <div>
+          <p class="alert-title">Um e-mail será enviado automaticamente ao cliente</p>
+          <p class="alert-subtitle">Isso acontece para documentos do tipo <strong>Boleto</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-panel-footer">
+      <button class="btn btn-secondary" onclick="closeUpload()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-confirmar-upload">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: pré-visualização de documento (Documentos enviados) -->
+<div class="modal-overlay" id="modal-doc-preview">
+  <div class="modal" style="width:460px;">
+    <div class="preview-card" id="doc-preview-icon"></div>
+    <h3 id="doc-preview-name">Documento</h3>
+    <p class="hint" id="doc-preview-meta">—</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="document.getElementById('modal-doc-preview').classList.remove('open')">Fechar</button>
+      <button class="btn btn-primary" id="doc-preview-download-btn">Baixar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: confirmar remoção de administrador -->
+<div class="modal-overlay" id="modal-confirm-remove">
+  <div class="modal" style="width:380px;">
+    <div class="modal-icon-header">
+      <div class="modal-icon-badge" style="background:var(--semantic-danger);" id="confirm-remove-icon"></div>
+      <div>
+        <h3 style="margin:0;">Remover administrador</h3>
+      </div>
+    </div>
+    <p class="hint" style="margin:14px 0 0;">Tem certeza que deseja remover <strong id="confirm-admin-nome">—</strong> do painel administrativo? Essa pessoa perde o acesso imediatamente.</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="document.getElementById('modal-confirm-remove').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-primary" style="background:var(--semantic-danger);" id="btn-confirmar-remocao">Remover</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: novo administrador -->
+<div class="modal-overlay" id="modal-admin">
+  <div class="modal">
+    <h3>Adicionar administrador</h3>
+    <p class="hint">Essa pessoa poderá acessar o painel administrativo com o nível selecionado.</p>
+    <div class="field"><label>Nome completo</label><input placeholder="Ex: Ana Paula" id="admin-nome-input"></div>
+    <div class="field"><label>E-mail</label><input placeholder="pessoa@trilharcontabilidade.com" id="admin-email-input"></div>
+    <div class="field">
+      <label>Nível de acesso</label>
+      <select class="select-like" id="admin-nivel-select">
+        <option value="Administrador">Administrador — acesso completo</option>
+        <option value="Colaborador">Colaborador — sem gerenciar outros administradores</option>
+      </select>
+    </div>
+    <div class="field"><label>Senha de acesso</label><input type="password" placeholder="Mínimo 6 caracteres" id="admin-senha-input"></div>
+    <div class="field"><label>Confirmar senha</label><input type="password" placeholder="Repita a senha" id="admin-senha-confirma-input"></div>
+    <p class="hint" id="admin-senha-erro" style="display:none; color:var(--semantic-danger); margin:-8px 0 14px;">As senhas não coincidem.</p>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="document.getElementById('modal-admin').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-confirmar-admin">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Painel lateral: detalhe do cliente -->
+<div class="panel-overlay" id="panel-detalhe" onclick="if(event.target===this) closeDetalhe()">
+  <div class="side-panel" id="side-panel-detalhe">
+    <div class="panel-resize-handle" id="panel-resize-handle"></div>
+    <div class="side-panel-header">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div class="avatar" id="detalhe-avatar" style="width:48px; height:48px; font-size:16px;"></div>
+        <div>
+          <h3 id="detalhe-nome" style="margin:0; font-size:16px;">Cliente</h3>
+          <p class="hint" id="detalhe-email" style="margin:0;">email@exemplo.com</p>
+        </div>
+      </div>
+      <button class="panel-close" onclick="closeDetalhe()" id="detalhe-close-btn"></button>
+    </div>
+
+    <div class="side-panel-body">
+      <p class="panel-section-title">Dados cadastrais</p>
+      <div class="info-grid">
+        <div><p class="label">Status</p><p class="value" id="detalhe-status">—</p></div>
+        <div><p class="label">CPF / CNPJ</p><p class="value" id="detalhe-doc">—</p></div>
+        <div><p class="label">Telefone</p><p class="value" id="detalhe-tel">—</p></div>
+        <div><p class="label">Data de cadastro</p><p class="value" id="detalhe-desde">—</p></div>
+        <div><p class="label">Último acesso ao portal</p><p class="value" id="detalhe-acesso">—</p></div>
+      </div>
+
+      <p class="panel-section-title">Documentos por categoria</p>
+      <div id="detalhe-categorias" style="display:flex; flex-direction:column; gap:20px;"></div>
+    </div>
+
+    <div class="side-panel-footer">
+      <button class="btn btn-secondary" onclick="closeDetalhe()">Fechar</button>
+      <button class="btn btn-primary" onclick="closeDetalhe(); openUpload();" id="detalhe-enviar-btn">Enviar documento</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+  document.getElementById("btn-novo-cliente").innerHTML = ICONS.user + " Novo cliente";
+  document.getElementById("btn-upload").innerHTML = ICONS.download + " Upload de documento";
+  document.getElementById("kpi-icon-clients").innerHTML = ICONS.user;
+  document.getElementById("kpi-icon-docs").innerHTML = ICONS.doc;
+  document.getElementById("kpi-icon-warning").innerHTML = ICONS.bell;
+  document.getElementById("kpi-icon-pending").innerHTML = ICONS.contract;
+  document.getElementById("email-note-icon").innerHTML = ICONS.mail;
+  document.getElementById("detalhe-close-btn").innerHTML = '<svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+  const userItems = document.querySelectorAll("#user-panel .dropdown-item");
+  userItems[1].innerHTML = ICONS.logout + " Sair";
+  document.getElementById("btn-novo-admin").innerHTML = ICONS.user + " Adicionar administrador";
+  document.getElementById("confirm-remove-icon").innerHTML = ICONS.x;
+  document.getElementById("doc-preview-icon").innerHTML = ICONS.doc;
+
+  const CATEGORIES = ["Boleto", "Cartão CNPJ", "Documentos da Empresa", "Contrato", "Declarações"];
+
+  const CLIENTS = [
+    {
+      nome: "João Silva", email: "joao@exemplo.com", doc: "123.456.789-00", tel: "(11) 98765-4321", ativo: true,
+      desde: "15/01/2026", acesso: "Hoje, 09:42", ultimoDoc: "Boleto - Junho 2026", ultimoEnvio: "Enviado hoje",
+      pendencias: [], completas: ["Boleto", "Cartão CNPJ", "Documentos da Empresa", "Contrato", "Declarações"],
+      documentos: [
+        { nome: "Boleto - Junho 2026", categoria: "Boleto", data: "22/06/2026" },
+        { nome: "Boleto - Maio 2026", categoria: "Boleto", data: "20/05/2026" },
+        { nome: "Cartão CNPJ - Atualizado", categoria: "Cartão CNPJ", data: "10/03/2026" },
+        { nome: "Contrato Social", categoria: "Documentos da Empresa", data: "15/01/2026" },
+        { nome: "Contrato de Prestação de Serviços", categoria: "Contrato", data: "12/01/2026" },
+        { nome: "Declaração de Faturamento - 2025", categoria: "Declarações", data: "08/01/2026" }
+      ]
+    },
+    {
+      nome: "Maria Souza", email: "maria@exemplo.com", doc: "234.567.890-11", tel: "(11) 91234-5678", ativo: true,
+      desde: "20/02/2026", acesso: "Há 5 dias", ultimoDoc: "Cartão CNPJ - Atualizado", ultimoEnvio: "Enviado há 3 dias",
+      pendencias: ["Declarações"], completas: ["Boleto", "Cartão CNPJ", "Documentos da Empresa", "Contrato"],
+      documentos: [
+        { nome: "Cartão CNPJ - Atualizado", categoria: "Cartão CNPJ", data: "19/06/2026" },
+        { nome: "Boleto - Junho 2026", categoria: "Boleto", data: "05/06/2026" },
+        { nome: "Contrato Social", categoria: "Documentos da Empresa", data: "20/02/2026" },
+        { nome: "Contrato de Prestação de Serviços", categoria: "Contrato", data: "18/02/2026" }
+      ]
+    },
+    {
+      nome: "Empresa Alfa Ltda", email: "contato@alfa.com", doc: "12.345.678/0001-90", tel: "(11) 3344-5566", ativo: true,
+      desde: "10/03/2026", acesso: "Ontem", ultimoDoc: "Contrato Social", ultimoEnvio: "Enviado há 1 semana",
+      pendencias: [], completas: ["Boleto", "Cartão CNPJ", "Documentos da Empresa", "Contrato", "Declarações"],
+      documentos: [
+        { nome: "Contrato Social", categoria: "Documentos da Empresa", data: "15/06/2026" },
+        { nome: "Boleto - Junho 2026", categoria: "Boleto", data: "03/06/2026" },
+        { nome: "Cartão CNPJ - Atualizado", categoria: "Cartão CNPJ", data: "22/03/2026" },
+        { nome: "Contrato de Prestação de Serviços", categoria: "Contrato", data: "10/03/2026" },
+        { nome: "Declaração de Faturamento - 2025", categoria: "Declarações", data: "05/03/2026" }
+      ]
+    },
+    {
+      nome: "Carlos Pereira", email: "carlos@exemplo.com", doc: "345.678.901-22", tel: "(11) 99887-7665", ativo: false,
+      desde: "05/04/2026", acesso: "Há 3 semanas", ultimoDoc: "Boleto - Maio 2026", ultimoEnvio: "Enviado há 2 semanas",
+      pendencias: ["Contrato", "Declarações"], completas: ["Boleto", "Cartão CNPJ", "Documentos da Empresa"],
+      documentos: [
+        { nome: "Boleto - Maio 2026", categoria: "Boleto", data: "08/06/2026" },
+        { nome: "Cartão CNPJ - Atualizado", categoria: "Cartão CNPJ", data: "02/05/2026" },
+        { nome: "Contrato Social", categoria: "Documentos da Empresa", data: "20/04/2026" }
+      ]
+    }
+  ];
+
+  const DOC_LOG = [
+    { data: "22/06/2026", cliente: "João Silva", doc: "Boleto - Junho 2026", cat: "Boleto", email: true },
+    { data: "19/06/2026", cliente: "Maria Souza", doc: "Cartão CNPJ - Atualizado", cat: "Cartão CNPJ", email: false },
+    { data: "15/06/2026", cliente: "Empresa Alfa Ltda", doc: "Contrato Social", cat: "Documentos da Empresa", email: false },
+    { data: "08/06/2026", cliente: "Carlos Pereira", doc: "Boleto - Maio 2026", cat: "Boleto", email: true }
+  ];
+
+  function initials(name) {
+    return name.split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
+  }
+
+  document.getElementById("search-icon").innerHTML = '<svg class="icon" style="width:16px;height:16px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';
+  document.getElementById("cliente-note-icon").innerHTML = ICONS.mail;
+
+  // Preview de iniciais ao cadastrar cliente
+  const clientePreview = document.getElementById("novo-cliente-preview");
+  clientePreview.innerHTML = ICONS.user;
+  document.getElementById("novo-cliente-nome").addEventListener("input", function () {
+    if (clientePreview.dataset.hasPhoto) return;
+    const nome = this.value.trim();
+    clientePreview.innerHTML = nome ? initials(nome) : ICONS.user;
+    clientePreview.classList.toggle("has-initials", !!nome);
+  });
+
+  // Upload de foto/logo do cliente
+  document.getElementById("avatar-upload-badge").innerHTML = ICONS.camera;
+  const fotoInput = document.getElementById("novo-cliente-foto");
+  document.getElementById("avatar-upload-trigger").addEventListener("click", () => fotoInput.click());
+  fotoInput.addEventListener("change", function () {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      clientePreview.style.backgroundImage = `url(${e.target.result})`;
+      clientePreview.innerHTML = "";
+      clientePreview.dataset.hasPhoto = "1";
+    };
+    reader.readAsDataURL(file);
+  });
+
+  const tbody = document.getElementById("clients-tbody");
+  const noResults = document.getElementById("no-results");
+
+  function renderClients(filter) {
+    const term = (filter || "").trim().toLowerCase();
+    tbody.innerHTML = "";
+    let visible = 0;
+
+    CLIENTS.forEach((c, i) => {
+      const matches = !term ||
+        c.nome.toLowerCase().includes(term) ||
+        c.email.toLowerCase().includes(term) ||
+        c.doc.toLowerCase().includes(term);
+      if (!matches) return;
+      visible++;
+
+      const row = document.createElement("tr");
+      row.className = "row-clickable";
+      const pendTag = c.pendencias.length === 0
+        ? `<span class="pending-indicator ok" title="Todas as categorias enviadas">${ICONS.check}</span>`
+        : `<span class="pending-indicator warn" title="Pendente: ${c.pendencias.join(', ')}">${ICONS.bell}<strong>${c.pendencias.length}</strong></span>`;
+      const statusTag = c.ativo
+        ? `<span class="status-tag active"><span class="status-dot"></span>Ativo</span>`
+        : `<span class="status-tag inactive"><span class="status-dot"></span>Inativo</span>`;
+      row.innerHTML = `
+        <td>
+          <div class="client-cell">
+            <div class="avatar">${initials(c.nome)}</div>
+            <div>
+              <span class="client-link">${c.nome}</span>
+              <div class="client-doc">${c.doc}</div>
+            </div>
+          </div>
+        </td>
+        <td>${c.email}</td>
+        <td>${statusTag}</td>
+        <td><div class="last-doc"><strong>${c.ultimoDoc}</strong><span>${c.ultimoEnvio}</span></div></td>
+        <td>${pendTag}</td>
+        <td style="text-align:right;"><button class="icon-btn" type="button" title="Enviar documento"></button></td>
+      `;
+      const sendBtn = row.querySelector(".icon-btn");
+      sendBtn.innerHTML = ICONS.download;
+      sendBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openUpload();
+      });
+      row.addEventListener("click", () => openDetalhe(i));
+      tbody.appendChild(row);
+    });
+
+    noResults.style.display = visible === 0 ? "block" : "none";
+    tbody.parentElement.style.display = visible === 0 ? "none" : "table";
+  }
+  renderClients("");
+
+  document.getElementById("client-search").addEventListener("input", (e) => renderClients(e.target.value));
+
+  const docsTbody = document.getElementById("docs-tbody");
+  DOC_LOG.forEach(d => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${d.data}</td>
+      <td>${d.cliente}</td>
+      <td>${d.doc}</td>
+      <td>${d.cat}</td>
+      <td>${d.email ? '<span class="due-tag ok">Enviado</span>' : '<span class="stat-label" style="margin:0;">Não aplicável</span>'}</td>
+      <td style="display:flex; gap:6px; justify-content:flex-end;">
+        <button class="icon-btn doc-preview-btn" title="Visualizar"></button>
+        <button class="icon-btn doc-download-btn" title="Baixar novamente"></button>
+      </td>
+    `;
+    row.querySelector(".doc-preview-btn").innerHTML = ICONS.eye;
+    row.querySelector(".doc-download-btn").innerHTML = ICONS.download;
+    row.querySelector(".doc-preview-btn").addEventListener("click", () => openDocPreview(d));
+    row.querySelector(".doc-download-btn").addEventListener("click", (e) => simulateDownload(e.currentTarget, d.doc));
+    docsTbody.appendChild(row);
+  });
+
+  function openDocPreview(d) {
+    document.getElementById("doc-preview-name").textContent = d.doc;
+    document.getElementById("doc-preview-meta").textContent = d.cliente + " · " + d.cat + " · Enviado em " + d.data;
+    const btn = document.getElementById("doc-preview-download-btn");
+    btn.innerHTML = ICONS.download + " Baixar";
+    btn.onclick = () => simulateDownload(btn, d.doc);
+    document.getElementById("modal-doc-preview").classList.add("open");
+  }
+
+  // Data de hoje no cabeçalho
+  const hoje = new Date(2026, 5, 22);
+  document.getElementById("today-eyebrow").textContent =
+    "Administração · " + hoje.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+
+  // ---------- Calendário de vencimentos ----------
+  const BOLETOS = [
+    { data: new Date(2026, 4, 28), cliente: "João Silva", doc: "Boleto - Maio 2026", pago: true },
+    { data: new Date(2026, 5, 26), cliente: "João Silva", doc: "Boleto - Junho 2026" },
+    { data: new Date(2026, 5, 30), cliente: "Empresa Alfa Ltda", doc: "Boleto - Junho 2026" },
+    { data: new Date(2026, 6, 5), cliente: "Maria Souza", doc: "Boleto - Julho 2026" },
+    { data: new Date(2026, 6, 10), cliente: "Carlos Pereira", doc: "Boleto - Julho 2026" },
+    { data: new Date(2026, 6, 22), cliente: "João Silva", doc: "Boleto - Julho 2026" }
+  ];
+
+  function sameDay(a, b) {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+
+  let calYear = hoje.getFullYear();
+  let calMonth = hoje.getMonth();
+
+  function renderCalendar() {
+    const label = new Date(calYear, calMonth, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    document.getElementById("cal-month-label").textContent = label.charAt(0).toUpperCase() + label.slice(1);
+
+    const grid = document.getElementById("calendar-grid");
+    grid.innerHTML = "";
+    const firstWeekday = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+    for (let i = 0; i < firstWeekday; i++) {
+      const empty = document.createElement("div");
+      empty.className = "cal-cell empty";
+      grid.appendChild(empty);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(calYear, calMonth, d);
+      const cell = document.createElement("div");
+      cell.className = "cal-cell";
+      cell.innerHTML = `<span class="cal-daynum">${d}</span>`;
+
+      const boletosDoDia = BOLETOS.filter(b => !b.pago && sameDay(b.data, date));
+      if (sameDay(date, hoje)) cell.classList.add("today");
+      if (boletosDoDia.length > 0) {
+        cell.classList.add("due");
+        cell.title = boletosDoDia.map(b => b.cliente + " — " + b.doc).join("\n");
+      }
+      grid.appendChild(cell);
+    }
+  }
+
+  function renderUpcoming() {
+    const list = document.getElementById("upcoming-list");
+    list.innerHTML = "";
+    const futuros = BOLETOS
+      .filter(b => !b.pago && b.data >= hoje)
+      .sort((a, b) => a.data - b.data)
+      .slice(0, 5);
+
+    if (futuros.length === 0) {
+      list.innerHTML = '<p class="upcoming-empty">Nenhum boleto programado.</p>';
+      return;
+    }
+
+    futuros.forEach(b => {
+      const dias = Math.round((b.data - hoje) / 86400000);
+      const urgente = dias <= 7;
+      const quando = dias === 0 ? "Hoje" : "Em " + dias + " dias";
+      const dataFmt = b.data.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }).replace(".", "");
+      const item = document.createElement("div");
+      item.className = "activity-item" + (urgente ? " urgent" : "");
+      item.innerHTML = `
+        <div class="dot-icon">${ICONS.bell}</div>
+        <div><p><strong>${b.cliente}</strong> — ${b.doc}</p><span>${dataFmt} · ${quando}</span></div>
+      `;
+      list.appendChild(item);
+    });
+  }
+
+  document.getElementById("cal-prev").innerHTML = ICONS.back;
+  document.getElementById("cal-next").innerHTML = '<svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>';
+  document.getElementById("cal-prev").addEventListener("click", () => {
+    calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  });
+  document.getElementById("cal-next").addEventListener("click", () => {
+    calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+  });
+
+  renderCalendar();
+  renderUpcoming();
+
+  // "Precisa de atenção" — clientes com pendências + boletos vencendo
+  const totalPendencias = CLIENTS.reduce((soma, c) => soma + c.pendencias.length, 0);
+  document.getElementById("kpi-pending-trend").textContent = totalPendencias + " categorias pendentes no total";
+
+  const attentionList = document.getElementById("attention-list");
+  const itensAtencao = [];
+  CLIENTS.forEach((c, i) => {
+    if (c.pendencias.length > 0) {
+      itensAtencao.push({
+        texto: c.nome + " está com " + c.pendencias.length + " categoria(s) pendente(s)",
+        meta: "Faltam: " + c.pendencias.join(", "),
+        idx: i
+      });
+    }
+  });
+  const boletoVencendo = CLIENTS.find(c => (c.documentos || []).some(d => d.nome === "Boleto - Junho 2026"));
+  if (boletoVencendo) {
+    itensAtencao.unshift({
+      texto: "Boleto de " + boletoVencendo.nome + " vence em 4 dias",
+      meta: "Acompanhar pagamento",
+      idx: CLIENTS.indexOf(boletoVencendo)
+    });
+  }
+  if (itensAtencao.length === 0) {
+    attentionList.innerHTML = '<p class="attention-empty">Nenhuma pendência no momento.</p>';
+  } else {
+    itensAtencao.forEach(item => {
+      const el = document.createElement("div");
+      el.className = "attention-item";
+      el.innerHTML = `
+        <div class="dot-icon">${ICONS.bell}</div>
+        <div><p>${item.texto}</p><span>${item.meta}</span></div>
+      `;
+      el.addEventListener("click", () => openDetalhe(item.idx));
+      attentionList.appendChild(el);
+    });
+  }
+
+  // KPIs de alerta apontam para o detalhamento (sem duplicar nomes no resumo)
+  function focusAttention() {
+    const card = attentionList.closest(".side-card");
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    card.classList.remove("pulse");
+    requestAnimationFrame(() => card.classList.add("pulse"));
+  }
+  document.getElementById("kpi-card-warning").addEventListener("click", focusAttention);
+  document.getElementById("kpi-card-pending").addEventListener("click", focusAttention);
+
+  // Atividade recente — últimos envios e acessos
+  const ATIVIDADES = [
+    { icone: "doc", texto: "Você enviou <strong>Boleto - Junho 2026</strong> para João Silva", quando: "Hoje, 09:42" },
+    { icone: "user", texto: "<strong>João Silva</strong> acessou o portal", quando: "Hoje, 09:50" },
+    { icone: "doc", texto: "Você enviou <strong>Cartão CNPJ</strong> para Maria Souza", quando: "19/06, 14:10" },
+    { icone: "user", texto: "<strong>Empresa Alfa Ltda</strong> acessou o portal", quando: "Ontem" },
+    { icone: "doc", texto: "Você enviou <strong>Contrato Social</strong> para Empresa Alfa Ltda", quando: "15/06" }
+  ];
+  const activityFeed = document.getElementById("activity-feed");
+  ATIVIDADES.forEach(a => {
+    const el = document.createElement("div");
+    el.className = "activity-item";
+    el.innerHTML = `
+      <div class="dot-icon">${ICONS[a.icone]}</div>
+      <div><p>${a.texto}</p><span>${a.quando}</span></div>
+    `;
+    activityFeed.appendChild(el);
+  });
+
+  const ADMINS = [
+    { nome: "Tinaysa", email: "tinaysa@trilharcontabilidade.com", senha: "Definida no cadastro inicial", nivel: "Administrador", desde: "Proprietária", fixo: true },
+    { nome: "Ana Paula", email: "ana@trilharcontabilidade.com", senha: "Definida no cadastro", nivel: "Colaborador", desde: "Mai/2026", fixo: false }
+  ];
+
+  function gerarPDF(a) {
+    const url = "boas-vindas.html?nome=" + encodeURIComponent(a.nome) +
+      "&email=" + encodeURIComponent(a.email) +
+      "&senha=" + encodeURIComponent(a.senha) +
+      "&nivel=" + encodeURIComponent(a.nivel);
+    window.open(url, "_blank");
+  }
+
+  const adminsTbody = document.getElementById("admins-tbody");
+  function renderAdmins() {
+    adminsTbody.innerHTML = "";
+    ADMINS.forEach((a, i) => {
+      const row = document.createElement("tr");
+      if (!a.fixo) row.className = "row-clickable";
+      const nivelTag = a.nivel === "Administrador"
+        ? `<span class="due-tag ok">${a.nivel}</span>`
+        : `<span class="due-tag warning" style="background:var(--bg-surface-elevated); color:var(--text-secondary);">${a.nivel}</span>`;
+      const nomeCell = a.fixo
+        ? `<span style="font-weight:600;">${a.nome}</span>`
+        : `<span class="client-link">${a.nome}</span>`;
+      row.innerHTML = `
+        <td>${nomeCell}${a.fixo ? "" : '<div class="client-doc">Clique para remover</div>'}</td>
+        <td>${a.email}</td>
+        <td>${nivelTag}</td>
+        <td>${a.desde}</td>
+        <td style="text-align:right;"><button class="icon-btn pdf-admin-btn" title="Gerar PDF de boas-vindas"></button></td>
+      `;
+      row.querySelector(".pdf-admin-btn").innerHTML = ICONS.download;
+      row.querySelector(".pdf-admin-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        gerarPDF(a);
+      });
+      if (!a.fixo) {
+        row.addEventListener("click", () => confirmRemoveAdmin(i));
+      }
+      adminsTbody.appendChild(row);
+    });
+  }
+  renderAdmins();
+
+  function confirmRemoveAdmin(i) {
+    const a = ADMINS[i];
+    document.getElementById("confirm-admin-nome").textContent = a.nome;
+    document.getElementById("modal-confirm-remove").classList.add("open");
+    document.getElementById("btn-confirmar-remocao").onclick = () => {
+      ADMINS.splice(i, 1);
+      renderAdmins();
+      document.getElementById("modal-confirm-remove").classList.remove("open");
+      showToast("Administrador removido");
+    };
+  }
+
+  document.getElementById("btn-novo-admin").addEventListener("click", () => {
+    document.getElementById("modal-admin").classList.add("open");
+  });
+
+  document.getElementById("btn-confirmar-admin").addEventListener("click", function () {
+    const btn = this;
+    const nomeInput = document.getElementById("admin-nome-input");
+    const emailInput = document.getElementById("admin-email-input");
+    const senhaInput = document.getElementById("admin-senha-input");
+    const senhaConfirmaInput = document.getElementById("admin-senha-confirma-input");
+    const erro = document.getElementById("admin-senha-erro");
+
+    const senhaValida = senhaInput.value.length >= 6 && senhaInput.value === senhaConfirmaInput.value;
+    if (!senhaValida) {
+      erro.textContent = senhaInput.value.length < 6
+        ? "A senha deve ter pelo menos 6 caracteres."
+        : "As senhas não coincidem.";
+      erro.style.display = "block";
+      return;
+    }
+    erro.style.display = "none";
+
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = ICONS.spinner + " Adicionando...";
+    btn.classList.add("btn-loading");
+    setTimeout(() => {
+      btn.classList.remove("btn-loading");
+      btn.textContent = original;
+      btn.disabled = false;
+      const novoAdmin = {
+        nome: nomeInput.value || "Novo administrador",
+        email: emailInput.value || "—",
+        senha: senhaInput.value,
+        nivel: document.getElementById("admin-nivel-select").value,
+        desde: "Agora",
+        fixo: false
+      };
+      ADMINS.push(novoAdmin);
+      renderAdmins();
+      document.getElementById("modal-admin").classList.remove("open");
+      showToast("Administrador adicionado com sucesso");
+      gerarPDF(novoAdmin);
+      nomeInput.value = "";
+      emailInput.value = "";
+      senhaInput.value = "";
+      senhaConfirmaInput.value = "";
+    }, 900);
+  });
+
+  function switchTab(name) {
+    document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+    document.getElementById("tab-clientes").style.display = name === "clientes" ? "block" : "none";
+    document.getElementById("tab-documentos").style.display = name === "documentos" ? "block" : "none";
+    document.getElementById("tab-admins").style.display = name === "admins" ? "block" : "none";
+  }
+
+  function openDetalhe(idx) {
+    const c = CLIENTS[idx];
+    document.getElementById("detalhe-avatar").textContent = initials(c.nome);
+    document.getElementById("detalhe-nome").textContent = c.nome;
+    document.getElementById("detalhe-email").textContent = c.email;
+    document.getElementById("detalhe-doc").textContent = c.doc;
+    document.getElementById("detalhe-tel").textContent = c.tel;
+    document.getElementById("detalhe-desde").textContent = c.desde;
+    document.getElementById("detalhe-acesso").textContent = c.acesso;
+    document.getElementById("detalhe-status").innerHTML = c.ativo
+      ? '<span class="status-tag active"><span class="status-dot"></span>Ativo</span>'
+      : '<span class="status-tag inactive"><span class="status-dot"></span>Inativo</span>';
+
+    const wrap = document.getElementById("detalhe-categorias");
+    wrap.innerHTML = "";
+    CATEGORIES.forEach(cat => {
+      const ok = c.completas.includes(cat);
+      const docsDaCategoria = (c.documentos || []).filter(d => d.categoria === cat);
+
+      const group = document.createElement("div");
+      group.className = "cat-group" + (ok ? " sent" : " pending");
+
+      const head = document.createElement("div");
+      head.className = "cat-group-head";
+      head.innerHTML = `
+        <div class="cat-status-icon">${ok ? ICONS.check : ICONS.dot}</div>
+        <span class="cat-group-name">${cat}</span>
+        <span class="cat-group-count">${docsDaCategoria.length}</span>
+      `;
+      group.appendChild(head);
+
+      if (docsDaCategoria.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "cat-empty-row";
+        empty.innerHTML = `${ICONS.empty} Nenhum documento enviado ainda`;
+        group.appendChild(empty);
+      } else {
+        const list = document.createElement("div");
+        list.className = "doc-chip-list";
+        docsDaCategoria.forEach(doc => {
+          const chip = document.createElement("div");
+          chip.className = "doc-chip";
+          chip.innerHTML = `
+            ${ICONS.doc}
+            <div><p>${doc.nome}</p><span>${doc.data}</span></div>
+          `;
+          list.appendChild(chip);
+        });
+        group.appendChild(list);
+      }
+
+      wrap.appendChild(group);
+    });
+
+    document.getElementById("panel-detalhe").classList.add("open");
+  }
+
+  function closeDetalhe() {
+    document.getElementById("panel-detalhe").classList.remove("open");
+  }
+
+  function openCliente() { document.getElementById("panel-cliente").classList.add("open"); }
+  function closeCliente() { document.getElementById("panel-cliente").classList.remove("open"); }
+  function openUpload() { document.getElementById("panel-upload").classList.add("open"); }
+  function closeUpload() { document.getElementById("panel-upload").classList.remove("open"); }
+
+  document.getElementById("upload-header-icon").innerHTML = ICONS.download;
+  const closeIconSvg = '<svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+  document.getElementById("cliente-close-btn").innerHTML = closeIconSvg;
+  document.getElementById("upload-close-btn").innerHTML = closeIconSvg;
+
+  // Painel lateral ajustável (arrastar para redimensionar)
+  (function setupPanelResize() {
+    const panel = document.getElementById("side-panel-detalhe");
+    const handle = document.getElementById("panel-resize-handle");
+    const MIN_WIDTH = 360;
+    const MAX_WIDTH = 760;
+
+    const savedWidth = localStorage.getItem("trilhar-panel-width");
+    if (savedWidth) panel.style.width = savedWidth + "px";
+
+    let dragging = false;
+
+    handle.addEventListener("mousedown", (e) => {
+      dragging = true;
+      panel.classList.add("resizing");
+      e.preventDefault();
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!dragging) return;
+      const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, window.innerWidth - e.clientX));
+      panel.style.width = newWidth + "px";
+    });
+
+    window.addEventListener("mouseup", () => {
+      if (!dragging) return;
+      dragging = false;
+      panel.classList.remove("resizing");
+      localStorage.setItem("trilhar-panel-width", parseInt(panel.style.width, 10));
+    });
+  })();
+
+  function toggleDueDate() {
+    const cat = document.getElementById('cat-select').value;
+    const dueField = document.getElementById('due-field');
+    const note = document.getElementById('email-note');
+    const subcatField = document.getElementById('subcat-field');
+    if (cat === 'boleto') {
+      dueField.style.display = 'block';
+      note.style.display = 'flex';
+    } else {
+      dueField.style.display = 'none';
+      note.style.display = 'none';
+    }
+    subcatField.style.display = cat === 'empresa' ? 'block' : 'none';
+  }
+
+  document.getElementById("btn-confirmar-cliente").addEventListener("click", function () {
+    const btn = this;
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = ICONS.spinner + " Cadastrando...";
+    btn.classList.add("btn-loading");
+    setTimeout(() => {
+      btn.classList.remove("btn-loading");
+      btn.textContent = original;
+      btn.disabled = false;
+      closeCliente();
+      document.getElementById("novo-cliente-nome").value = "";
+      clientePreview.innerHTML = ICONS.user;
+      clientePreview.style.backgroundImage = "";
+      delete clientePreview.dataset.hasPhoto;
+      fotoInput.value = "";
+      showToast("Cliente cadastrado com sucesso");
+    }, 900);
+  });
+
+  document.getElementById("dropzone-icon").innerHTML = ICONS.download;
+
+  const uploadFileInput = document.getElementById("upload-file-input");
+  const uploadFileList = document.getElementById("upload-file-list");
+  const dropzone = document.getElementById("dropzone");
+  let selectedFiles = [];
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  function renderFileList() {
+    uploadFileList.innerHTML = "";
+    selectedFiles.forEach((file, idx) => {
+      const row = document.createElement("div");
+      row.className = "upload-file-item";
+      row.innerHTML = `
+        <div class="doc-icon">${ICONS.doc}</div>
+        <div class="upload-file-item-info"><p>${file.name}</p><span>${formatBytes(file.size)}</span></div>
+        <button type="button" class="upload-file-remove" title="Remover">${ICONS.x}</button>
+      `;
+      row.querySelector(".upload-file-remove").addEventListener("click", () => {
+        selectedFiles.splice(idx, 1);
+        renderFileList();
+      });
+      uploadFileList.appendChild(row);
+    });
+  }
+
+  function addFiles(fileList) {
+    Array.from(fileList).forEach(file => {
+      if (!selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
+        selectedFiles.push(file);
+      }
+    });
+    renderFileList();
+  }
+
+  uploadFileInput.addEventListener("change", function () {
+    addFiles(this.files);
+    this.value = "";
+  });
+
+  ["dragenter", "dragover"].forEach(evt => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropzone.classList.add("drag-over");
+    });
+  });
+  ["dragleave", "drop"].forEach(evt => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("drag-over");
+    });
+  });
+  dropzone.addEventListener("drop", (e) => {
+    if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+  });
+
+  document.getElementById("btn-confirmar-upload").addEventListener("click", function () {
+    const btn = this;
+    const isBoleto = document.getElementById("cat-select").value === "boleto";
+    const qtdArquivos = selectedFiles.length || 1;
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = ICONS.spinner + " Enviando...";
+    btn.classList.add("btn-loading");
+    setTimeout(() => {
+      btn.classList.remove("btn-loading");
+      btn.textContent = original;
+      btn.disabled = false;
+      closeUpload();
+      const plural = qtdArquivos > 1 ? `${qtdArquivos} documentos enviados` : "Documento enviado";
+      showToast(isBoleto ? plural + " e e-mail disparado ao cliente" : plural + " ao cliente");
+      selectedFiles = [];
+      renderFileList();
+    }, 900);
+  });
+</script>
+</body>
+</html>

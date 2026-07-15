@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Histórico de Versões — Protótipo Trilhar Contabilidade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+<div class="app-shell">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark"><img src="../img/logo-glyph.png" alt="Trilhar Contabilidade"></div>
+      <div>
+        <div class="brand-name">TRILHAR CONTABILIDADE</div>
+        <div class="brand-sub">HISTÓRICO DE VERSÕES DO PROTÓTIPO</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <a href="../index.html" class="btn btn-secondary">Voltar ao protótipo atual</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="page-header">
+      <p class="eyebrow">Versionamento</p>
+      <h1 class="page-title">Histórico de versões</h1>
+      <p class="page-subtitle">Cada versão é uma cópia congelada do protótipo num momento específico — abra direto pelo navegador para comparar com a versão atual.</p>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr><th>Versão</th><th>Data</th><th>Descrição</th><th></th></tr>
+        </thead>
+        <tbody id="versions-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  const VERSIONS = [
+    {
+      pasta: "v1-2026-06-24",
+      data: "24/06/2026",
+      descricao: "Primeira versão estável: login, painel do cliente, categorias, painel administrativo completo (clientes, documentos, administradores, calendário de vencimentos), painéis laterais de cadastro/upload, temas claro/escuro."
+    },
+    {
+      pasta: "v2-2026-06-25",
+      data: "25/06/2026",
+      descricao: "Categorias de documento criadas pelo admin (escaláveis, refletem no cliente), filtros de categoria e período em Documentos Enviados, confirmação ao remover administrador, pré-visualização/baixar novamente, refinamentos visuais gerais."
+    },
+    {
+      pasta: "v3-2026-06-25",
+      data: "25/06/2026",
+      descricao: "Redesign do painel do cliente: layout em duas colunas inspirado no admin, card de 'Próximo vencimento' em destaque, 'Atividade recente' na visão do cliente, card de contato/ajuda, e metadado de atualização nos cards de categoria."
+    },
+    {
+      pasta: "v4-2026-06-25",
+      data: "25/06/2026",
+      descricao: "Microcopy e hierarquia do painel do cliente reescritas com tom consultivo: título e subtítulo dinâmicos por urgência real, faixa de alerta de boleto vencendo (estruturalmente diferente dos cards), CTA 'Baixar boleto antes de vencer', feed de atividade com verbos variados e marcação de itens 'novos', botão real de contato com a Trilhar."
+    },
+    {
+      pasta: "v5-2026-06-25",
+      data: "25/06/2026",
+      descricao: "Documentos enviados (admin) virou ferramenta de gestão real: busca, filtro por tipo/status (vencido/vencendo/pendente/pago)/período com presets de 7 e 30 dias, toggle 'só novidades', badges de status coloridos, menu de ações por linha (visualizar, baixar, reenviar, marcar como pago) e botão 'Baixar tudo'."
+    },
+    {
+      pasta: "v6-2026-06-25",
+      data: "25/06/2026",
+      descricao: "'Modo de foco' no painel do cliente: headline direta ('Você tem 1 pendência urgente hoje'), CTA 'Resolver agora' que pula direto pra pré-visualização do documento certo (zero cliques extras) — otimizado pra quem só entra pra checar pendência e sair."
+    },
+    {
+      pasta: "v7-2026-06-25",
+      data: "25/06/2026",
+      descricao: "Documentos enviados (admin): novo filtro por Cliente, e o botão 'Baixar tudo' passou a respeitar de fato todos os filtros ativos (cliente, tipo, status, período, busca), mostrando quantos documentos e de quem foram baixados."
+    },
+    {
+      pasta: "v8-2026-06-25",
+      data: "25/06/2026",
+      descricao: "Sistema de permissões por papel (Proprietário/Administrador/Usuário comum) na tela de Categorias: simulador de papel no menu da conta, edição inline de nome, popover de troca de ícone, ações reveladas no hover, bloqueio de remoção com documentos vinculados, banner de modo leitura."
+    },
+    {
+      pasta: "v9-2026-06-25",
+      data: "25/06/2026",
+      descricao: "Correção visual de 'Próximos vencimentos': saiu do formato genérico de feed (igual à Atividade recente) e ganhou identidade própria — caixa de data (dia/mês), cliente + documento, e badge de prazo colorido por urgência. Clique no item leva direto pra aba Documentos enviados."
+    },
+    {
+      pasta: "v10-2026-06-26",
+      data: "26/06/2026",
+      descricao: "Correção de bug crítico: o menu 'Conta' do admin tinha um item selecionado por posição (índice) que, após adicionarmos o simulador de papéis, passou a sobrescrever um dos botões de papel — corrompendo a estrutura e travando todo o script (calendário, categorias, listas e administradores ficavam vazios). Corrigido usando um id fixo em vez de posição. Também blindamos o acesso ao localStorage contra falhas em qualquer contexto de navegador."
+    },
+    {
+      pasta: "v11-2026-06-26",
+      data: "26/06/2026",
+      descricao: "Modal 'Nova categoria' virou um painel de configuração completo (960px, 7 abas): Geral (nome, descrição, busca de ícone), Aparência & Organização (cor, grupo, ordem), Configurações (7 switches reais), Validação (tipos de arquivo + tamanho máximo), Automações (5 switches visuais 'em breve'), Permissões (admin/colaborador/cliente) e Histórico (criada por, datas, documentos vinculados, clientes). Preview ao vivo mostra a categoria como aparecerá no upload, na lista e como tag. Edição de categoria existente agora abre o mesmo painel pré-preenchido, em vez de edição inline."
+    },
+    {
+      pasta: "v12-2026-06-26",
+      data: "26/06/2026",
+      descricao: "Centro de Gerenciamento de Equipe e Acessos (aba Administradores): redesign completo com KPI row, search/filter, tabela de convites pendentes, tabela de membros com status (online/offline), badges de papel e 2FA, painel lateral para detalhes de cada membro (Acesso, Segurança com 2FA toggle/reset de senha/sessões ativas, Atividade recente, Danger zone para revogar). Inspirado em GitHubOrganizations/Notion/Linear."
+    },
+    {
+      pasta: "v13-2026-06-29",
+      data: "29/06/2026",
+      descricao: "Suporte a Notas Fiscais e XLSM/XLS: adicionada nova categoria 'Notas Fiscais' com tipos de arquivo XML, PDF, XLSM, XLS. Boleto split: categoria única 'Boleto' dividida em 'Boleto - Honorários' (Trilhar cobra) e 'Boleto - Imposto' (cliente paga). Ambos boletos marcados com flag 'destaque: true'. UI redesignada no painel cliente: seção hero 'Seus pagamentos' com boletos em destaque (cards maiores, gradiente, sombra), seção archive 'Documentação e consulta' com outros documentos em grid menor (leitura rápida). Campo 'Foco do sistema' adicionado ao config panel (aba Aparência & Organização)."
+    },
+    {
+      pasta: "v14-2026-07-14",
+      data: "14/07/2026",
+      descricao: "Integração Supabase (Fase A): login do cliente passou a autenticar de verdade (Supabase Auth) com checagem de cadastro ativo em 'clientes', guarda de sessão nas páginas do cliente (painel, categoria, perfil) com overlay anti-flash, painel e categoria agora consultam categorias/documentos reais do banco (RLS garante isolamento por cliente), notas fiscais e demais documentos suportam múltiplos arquivos anexados (ex.: PDF + XML), download via URL assinada do Supabase Storage, logout real. admin.html permanece 100% mock — fica pra uma Fase B separada. Removido admin_inline.js (código morto)."
+    }
+  ];
+
+  const tbody = document.getElementById("versions-tbody");
+  VERSIONS.slice().reverse().forEach((v, i) => {
+    const isLatest = i === 0;
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td style="font-weight:700;">${v.pasta}${isLatest ? ' <span class="due-tag ok" style="margin-left:6px;">Mais recente</span>' : ''}</td>
+      <td>${v.data}</td>
+      <td style="max-width:420px; color:var(--text-secondary); font-size:13px;">${v.descricao}</td>
+      <td style="text-align:right;"><a href="${v.pasta}/index.html" class="btn btn-secondary" target="_blank">Abrir</a></td>
+    `;
+    tbody.appendChild(row);
+  });
+</script>
+</body>
+</html>
